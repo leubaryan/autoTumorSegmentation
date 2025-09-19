@@ -1,0 +1,136 @@
+# Training Configuration for Medical Image Segmentation
+
+# Model Configuration
+model:
+  type: "unet"  # Options: unet, unet3d
+  n_channels: 1  # Number of input channels (1 for grayscale, 3 for RGB, 4 for BraTS)
+  n_classes: 1   # Number of output classes (1 for binary segmentation)
+  bilinear: false  # Use bilinear upsampling instead of transposed convolution
+  use_attention: true  # Use attention gates in U-Net
+  pretrained_path: null  # Path to pretrained weights (optional)
+
+# Data Configuration
+data:
+  type: "general"  # Options: general, brats
+  image_size: [256, 256]  # Target image size [height, width]
+  
+  # For general dataset
+  train_image_dir: "data/train/images"
+  train_mask_dir: "data/train/masks"
+  val_image_dir: "data/val/images"
+  val_mask_dir: "data/val/masks"
+  
+  # For BraTS dataset
+  train_dir: "data/brats/train"
+  val_dir: "data/brats/val"
+  
+  # Data augmentation
+  augmentation:
+    horizontal_flip: 0.5
+    vertical_flip: 0.5
+    rotation: 15
+    scale: [0.9, 1.1]
+    brightness_contrast: 0.2
+    elastic_transform: 0.3
+    gaussian_noise: 0.3
+
+# Training Configuration
+training:
+  epochs: 100
+  batch_size: 8
+  num_workers: 4
+  
+  # Optimizer
+  optimizer:
+    type: "adamw"  # Options: adam, adamw, sgd
+    lr: 0.001
+    weight_decay: 0.0001
+    momentum: 0.9  # Only for SGD
+  
+  # Learning rate scheduler
+  scheduler:
+    type: "cosine"  # Options: step, cosine, plateau
+    step_size: 30  # For step scheduler
+    gamma: 0.1     # For step scheduler
+    T_max: 100     # For cosine scheduler
+    factor: 0.1    # For plateau scheduler
+    patience: 10   # For plateau scheduler
+  
+  # Loss function
+  loss:
+    type: "combined"  # Options: dice, focal, combined, tversky, bce
+    dice_weight: 0.5
+    bce_weight: 0.5
+    smooth: 1e-6
+  
+  # Validation
+  validation:
+    frequency: 1  # Validate every N epochs
+    save_best: true
+    early_stopping_patience: 20
+  
+  # Checkpointing
+  save_dir: "experiments"
+  save_frequency: 10  # Save checkpoint every N epochs
+  
+  # Logging
+  use_wandb: false  # Enable Weights & Biases logging
+  wandb_project: "medical-segmentation"
+  tensorboard: true
+  
+  # Mixed precision training
+  mixed_precision: true
+  
+  # Gradient clipping
+  gradient_clip: 1.0
+
+# Evaluation Configuration
+evaluation:
+  threshold: 0.5  # Threshold for binary segmentation
+  metrics: ["dice", "iou", "sensitivity", "specificity", "precision", "f1_score", "hausdorff"]
+  
+  # Test configuration
+  test_image_dir: "data/test/images"
+  test_mask_dir: "data/test/masks"
+  test_dir: "data/brats/test"  # For BraTS
+
+# Inference Configuration
+inference:
+  model_path: "experiments/best_model.pth"
+  output_dir: "results"
+  save_format: "png"  # Options: png, nii.gz, numpy
+  
+  # Post-processing
+  post_processing:
+    remove_small_objects: true
+    min_size: 100
+    morphological_operations: true
+    kernel_size: 3
+
+# Hardware Configuration
+hardware:
+  device: "auto"  # Options: auto, cuda, cpu
+  gpu_ids: [0]    # List of GPU IDs to use
+  precision: "float32"  # Options: float32, float16
+
+# Advanced Configuration
+advanced:
+  # Data loading
+  pin_memory: true
+  persistent_workers: true
+  
+  # Model
+  dropout_rate: 0.1
+  batch_norm_momentum: 0.1
+  
+  # Training
+  warmup_epochs: 5
+  label_smoothing: 0.0
+  
+  # Regularization
+  weight_decay: 0.0001
+  dropout: true
+  
+  # Monitoring
+  log_gradients: false
+  log_weights: false 
